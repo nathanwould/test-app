@@ -1,29 +1,59 @@
-// Welcome to Keystone!
-//
-// This file is what Keystone uses as the entry-point to your headless backend
-//
-// Keystone imports the default export of this file, expecting a Keystone configuration object
-//   you can find out more at https://keystonejs.com/docs/apis/config
-
 import { config } from '@keystone-6/core';
-
-// to keep this file tidy, we define our schema in a different file
-import { lists } from './schema';
-
-// authentication is configured separately here too, but you might move this elsewhere
-// when you write your list-level access control functions, as they typically rely on session data
+import { mergeSchemas } from '@graphql-tools/schema';
 import { withAuth, session } from './auth';
+import { lists } from './schema';
+import addToCart from './extendedSchema/mutations/addToCart';
+import checkout from './extendedSchema/mutations/checkout';
+
+const graphql = String.raw;
+
+const frontEndURL = process.env.FRONTEND_URL || "http://localhost:7777";
+
+const databaseURL = process.env.DATABASE_URL || 'postgres://admin:adminpassword@localhost/brassmart2';
 
 export default withAuth(
+  // Using the config function helps typescript guide you to the available options.
   config({
+    server: {
+      cors: {
+        origin: frontEndURL,
+        credentials: true,
+      },
+    },
+    // the db sets the database provider - we're using sqlite for the fastest startup experience
     db: {
-      // we're using sqlite for the fastest startup experience
-      //   for more information on what database might be appropriate for you
-      //   see https://keystonejs.com/docs/guides/choosing-a-database#title
-      provider: 'sqlite',
-      url: 'file:./keystone.db',
+      provider: 'postgresql',
+      url: databaseURL,
+      onConnect: async context => {
+        console.log('Connected to DB');
+        // console.log(context);
+        // if (process.argv.includes('--seed-data')) {
+        //   await insertSeedData(keystone);
+        // }
+      },
+    },
+    // This config allows us to set up features of the Admin UI https://keystonejs.com/docs/apis/config#ui
+    ui: {
+      // For our starter, we check that someone has session data before letting them see the Admin UI.
+      isAccessAllowed: (context) => !!context.session?.data,
     },
     lists,
+    extendGraphqlSchema: schema =>
+      mergeSchemas({
+        schemas: [schema],
+        typeDefs: graphql`
+          type Mutation {
+            addToCart(productId: ID!): CartItem
+            checkout(token: String!, shippingAddress: AddressCreateInput!, billingAddress: AddressCreateInput!): Order
+          }
+        `,
+        resolvers: {
+          Mutation: {
+            addToCart,
+            checkout,
+          },
+        },
+    }),
     session,
   })
 );
