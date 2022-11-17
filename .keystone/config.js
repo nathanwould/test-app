@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,10 +15,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // keystone.ts
@@ -30,7 +24,6 @@ __export(keystone_exports, {
 });
 module.exports = __toCommonJS(keystone_exports);
 var import_core8 = require("@keystone-6/core");
-var import_schema = require("@graphql-tools/schema");
 
 // auth.ts
 var import_auth = require("@keystone-6/auth");
@@ -361,95 +354,6 @@ var lists = {
   Address
 };
 
-// extendedSchema/mutations/addToCart.ts
-async function addToCart(root, { productId }, context) {
-  const sesh = context.session;
-  if (!sesh.itemId) {
-    throw new Error("Please log in to add products to your cart.");
-  }
-  ;
-  const allCartItems = await context.db.CartItem.findMany({
-    where: {
-      user: { id: { equals: sesh.itemId } },
-      product: { id: { equals: productId } }
-    }
-  });
-  const [existingCartItem] = allCartItems;
-  if (existingCartItem) {
-    console.log(`${existingCartItem} has already been added to your cart!`);
-    return;
-  }
-  ;
-  return await context.db.CartItem.createOne({
-    data: {
-      product: { connect: { id: productId } },
-      user: { connect: { id: sesh.itemId } }
-    }
-  });
-}
-var addToCart_default = addToCart;
-
-// lib/stripe.ts
-var import_stripe = __toESM(require("stripe"));
-var stripeConfig = new import_stripe.default(process.env.STRIPE_SECRET || "", {
-  apiVersion: "2022-11-15"
-});
-var stripe_default = stripeConfig;
-
-// extendedSchema/mutations/checkout.ts
-async function checkout(root, { token, shippingAddress, billingAddress }, context) {
-  console.log(shippingAddress, billingAddress);
-  if (!token) {
-    throw new Error("Stripe token is missing!");
-  }
-  const userId = context.session.itemId;
-  if (!userId) {
-    throw new Error("Sorry, you must be signed in to place an order.");
-  }
-  const user = await context.query.User.findOne({
-    where: { id: userId },
-    query: "id name email cart { id quantity product { id name price description photos {id image { id publicUrlTransformed }}}}"
-  });
-  const cartItems = user?.cart?.filter((cartItem) => cartItem.product);
-  const productPhotos = cartItems.map((cartItem) => cartItem.product.photos);
-  const amount = cartItems.reduce(function(tally, cartItem) {
-    return tally + cartItem.quantity * cartItem.product?.price;
-  }, 0);
-  const charge = await stripe_default.paymentIntents.create({
-    amount,
-    currency: "USD",
-    confirm: true,
-    payment_method: token
-  }).catch((err) => {
-    console.log(err);
-    throw new Error(err.message);
-  });
-  const orderItems = cartItems.map((cartItem) => {
-    const photoIds = cartItem.product.photos.map((photo) => ({ id: photo.id }));
-    const orderItem = {
-      product: { connect: { id: cartItem.product.id } },
-      quantity: cartItem.quantity
-    };
-    return orderItem;
-  });
-  const order = await context.db.Order.createOne({
-    data: {
-      total: charge.amount,
-      shipTo: { create: shippingAddress },
-      billTo: { create: billingAddress },
-      charge: charge.id,
-      items: { create: orderItems },
-      user: { connect: { id: userId } }
-    }
-  });
-  const cartItemIds = user.cart.map((cartItem) => ({ id: cartItem.id }));
-  await context.db.CartItem.deleteMany({
-    where: cartItemIds
-  });
-  return order;
-}
-var checkout_default = checkout;
-
 // keystone.ts
 var graphql = String.raw;
 var frontEndURL = process.env.FRONTEND_URL || "http://localhost:7777";
@@ -473,21 +377,6 @@ var keystone_default = withAuth(
       isAccessAllowed: (context) => !!context.session?.data
     },
     lists,
-    extendGraphqlSchema: (schema) => (0, import_schema.mergeSchemas)({
-      schemas: [schema],
-      typeDefs: graphql`
-          type Mutation {
-            addToCart(productId: ID!): CartItem
-            checkout(token: String!, shippingAddress: AddressCreateInput!, billingAddress: AddressCreateInput!): Order
-          }
-        `,
-      resolvers: {
-        Mutation: {
-          addToCart: addToCart_default,
-          checkout: checkout_default
-        }
-      }
-    }),
     session
   })
 );

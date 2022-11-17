@@ -38,22 +38,22 @@ export default withAuth(
       isAccessAllowed: (context) => !!context.session?.data,
     },
     lists,
-    extendGraphqlSchema: schema =>
-      mergeSchemas({
-        schemas: [schema],
-        typeDefs: graphql`
-          type Mutation {
-            addToCart(productId: ID!): CartItem
-            checkout(token: String!, shippingAddress: AddressCreateInput!, billingAddress: AddressCreateInput!): Order
-          }
-        `,
-        resolvers: {
-          Mutation: {
-            addToCart,
-            checkout,
-          },
-        },
-    }),
+    // extendGraphqlSchema: schema =>
+    //   mergeSchemas({
+    //     schemas: [schema],
+    //     typeDefs: graphql`
+    //       type Mutation {
+    //         addToCart(productId: ID!): CartItem
+    //         checkout(token: String!, shippingAddress: AddressCreateInput!, billingAddress: AddressCreateInput!): Order
+    //       }
+    //     `,
+    //     resolvers: {
+    //       Mutation: {
+    //         addToCart,
+    //         checkout,
+    //       },
+    //     },
+    // }),
     session,
   })
 );
