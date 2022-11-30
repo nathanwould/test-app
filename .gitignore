@@ -1,6 +1,9 @@
 node_modules
-.keystone
 .keystone/admin
+.keystone
+.next
+.build
 keystone.db
 *.log
 .env
+.DS_Store

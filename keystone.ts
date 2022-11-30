@@ -7,21 +7,21 @@ import checkout from './extendedSchema/mutations/checkout';
 
 const graphql = String.raw;
 
+const PORT = parseInt(process.env.PORT!) || 3000;
+
 const frontEndURL = process.env.FRONTEND_URL || "http://localhost:7777";
 
 const databaseURL = process.env.DATABASE_URL || 'postgres://admin:adminpassword@localhost/brassmart2';
-
-const PORT = parseInt(process.env.PORT!) || 3000;
 
 export default withAuth(
   // Using the config function helps typescript guide you to the available options.
   config({
     server: {
+      port: PORT,
       cors: {
-        origin: frontEndURL,
+        origin: [frontEndURL],
         credentials: true,
       },
-      port: PORT
     },
     // the db sets the database provider - we're using sqlite for the fastest startup experience
     db: {
@@ -38,7 +38,7 @@ export default withAuth(
     // This config allows us to set up features of the Admin UI https://keystonejs.com/docs/apis/config#ui
     ui: {
       // For our starter, we check that someone has session data before letting them see the Admin UI.
-      isAccessAllowed: (context) => !!context.session?.data,
+      isAccessAllowed: (context) => true /*!!context.session?.data*/,
     },
     lists,
     extendGraphqlSchema: schema =>
