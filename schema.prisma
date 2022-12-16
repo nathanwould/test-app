@@ -28,7 +28,7 @@ model Product {
   make                   String         @default("")
   model                  String         @default("")
   category               String
-  instrumentType         String
+  instrumentType         String?
   instrumentKey          String         @default("")
   boreSize               Float?
   bellSize               Float?

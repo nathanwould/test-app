@@ -235,7 +235,7 @@ input ProductWhereInput {
   make: StringFilter
   model: StringFilter
   category: StringFilter
-  instrumentType: StringFilter
+  instrumentType: StringNullableFilter
   instrumentKey: StringFilter
   boreSize: FloatNullableFilter
   bellSize: FloatNullableFilter
@@ -244,6 +244,35 @@ input ProductWhereInput {
   price: IntFilter
   status: StringFilter
   createdAt: DateTimeNullableFilter
+}
+
+input StringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  mode: QueryMode
+  not: NestedStringNullableFilter
+}
+
+input NestedStringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: NestedStringNullableFilter
 }
 
 input FloatNullableFilter {
