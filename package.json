@@ -8,7 +8,7 @@
     "build": "keystone build && keystone prisma migrate deploy",
     "deploy": "keystone build && keystone prisma migrate deploy",
     "reset": "keystone dev --reset-db",
-    "postinstall": "keystone postinstall",
+    "postinstall": "keystone prisma migrate deploy && keystone postinstall",
     "postinstall-fix": "keystone postinstall --fix",
     "migrate-deploy": "keystone prisma migrate deploy",
     "migrate-status": "keystone prisma migrate status",
