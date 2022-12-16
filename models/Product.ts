@@ -47,7 +47,6 @@ export const Product = list({
         { label: 'Mellophone', value: 'mellophone' },
         { label: 'Euphonium', value: 'euphonium' },
       ],
-      validation: { isRequired: !!{ productType: 'instrument' } },
       // TODO: conditional fields aren't supported yet but when they are, programatically render fields based on productType
       // ui: {
       //   createView: {
